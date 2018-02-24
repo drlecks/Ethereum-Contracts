@@ -27,6 +27,8 @@ contract BOASale is BlockableContract {
         
         remainingSale = 2500000 ether; 
         etherToToken = 9600; // 1 ether 9,600 tokens
+        
+        doBlockContract();
     }
       
     modifier airdropActive() {
@@ -53,7 +55,16 @@ contract BOASale is BlockableContract {
     function() public payable {    
         if(! !blockedContract && remainingSale > 0) buyTokens();
     }
-    
+     
+    function StartSale() onlyOwner public{ 
+        uint256 total = remainingFree + remainingSale;
+        
+        require(tokenContract.balanceOf(msg.sender) >= total);
+        
+        unBlockContract();
+        tokenContract.approve(this, total);
+        require(tokenContract.transferFrom(msg.sender, this, total));
+    }
     
     function buyTokens() contractActive saleActive public payable {
         uint256 visibleAmount = safeMultiply(msg.value , etherToToken);

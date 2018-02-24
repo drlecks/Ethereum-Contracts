@@ -6,25 +6,25 @@ pragma solidity ^0.4.20;
 import "./EIP20Interface.sol";
 import "./OwnableContract.sol";
 
-contract EIP20Token is EIP20Interface, OwnableContract {
+contract EIP20Token is EIP20Interface, OwnableContract{
 
     uint256 constant private MAX_UINT256 = 2**256 - 1;
-    mapping (address => uint256) public balances;
+    mapping (address => uint256) private balances;
     mapping (address => mapping (address => uint256)) public allowed;
        
     string public name;                             //fancy name: eg Alex Cabrera 
     string public symbol;                           //An identifier: eg ACG
      
-    function EIP20Token( ) OwnableContract() public {  
-        name = "EIP20Token";                // Set the name for display purposes
+    function EIP20Token( ) public {  
+        name = "EIP20Token";                        // Set the name for display purposes
         decimals = 18;                              // Amount of decimals for display purposes
         symbol = "EIPT";                            // Set the symbol for display purposes
-         
-        totalSupply = 69000000 ether;               // Update total supply
-        balances[superOwner] = totalSupply;         // Give the creator all initial tokens 
+          
+        totalSupply = 69000000 * 10 ** 18;               // Update total supply
+        balances[msg.sender] = totalSupply;         // Give the creator all initial tokens 
     } 
     
-    function viewOwner() public view returns(address o) {
+    function viewOwner() public view returns(address contractOwner) {
         return superOwner;
     }
      

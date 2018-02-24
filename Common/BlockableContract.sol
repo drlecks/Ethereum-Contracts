@@ -20,4 +20,8 @@ contract BlockableContract is OwnableContract{
 	function doBlockContract() onlyOwner public {
         blockedContract = true;
     }
+    
+    function unBlockContract() onlyOwner public {
+        blockedContract = false;
+    }
 }
