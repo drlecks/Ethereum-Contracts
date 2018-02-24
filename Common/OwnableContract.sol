@@ -5,7 +5,7 @@ contract OwnableContract {
  
     address superOwner;
 		
-	function BlockableContract() public { 
+	function OwnableContract() public { 
         superOwner = msg.sender;  
     }
 	

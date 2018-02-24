@@ -19,7 +19,7 @@ contract BOASale is BlockableContract {
     event Airdroped(address buyer, uint256 amount);
  
  
-    function BOASale(EIP20Interface _tokenContract) public { 
+    function BOASale(EIP20Interface _tokenContract) BlockableContract() public { 
         tokenContract = _tokenContract;  
            
         remainingFree = 2500000 ether; 

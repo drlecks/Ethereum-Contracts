@@ -15,7 +15,7 @@ contract EIP20Token is EIP20Interface, OwnableContract {
     string public name;                             //fancy name: eg Alex Cabrera 
     string public symbol;                           //An identifier: eg ACG
      
-    function EIP20Token( ) public { 
+    function EIP20Token( ) OwnableContract() public {  
         name = "EIP20Token";                // Set the name for display purposes
         decimals = 18;                              // Amount of decimals for display purposes
         symbol = "EIPT";                            // Set the symbol for display purposes
@@ -23,6 +23,10 @@ contract EIP20Token is EIP20Interface, OwnableContract {
         totalSupply = 69000000 ether;               // Update total supply
         balances[superOwner] = totalSupply;         // Give the creator all initial tokens 
     } 
+    
+    function viewOwner() public view returns(address o) {
+        return superOwner;
+    }
      
     function transfer(address _to, uint256 _value) public returns (bool success) {
         require(balances[msg.sender] >= _value);

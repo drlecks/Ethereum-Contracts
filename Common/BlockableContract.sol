@@ -8,7 +8,7 @@ contract BlockableContract is OwnableContract{
  
     bool public blockedContract;
 	
-	function BlockableContract() public { 
+	function BlockableContract() OwnableContract() public { 
         blockedContract = false;  
     }
 	
