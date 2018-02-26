@@ -4,14 +4,22 @@ pragma solidity ^0.4.20;
 import "./EIP20Interface.sol";
 import "./BlockableContract.sol";
 
-contract BOASale is BlockableContract {
+
+//to create contract user this initialization
+//"0x000000000000000000000000token_address"
+
+//from token contract, send tokens to this contract. in remix use this like:
+//"0x000000000000000000000000address", "50000000000000000000000000"
+ 
+
+contract BOASale is BlockableContract { 
     
     EIP20Interface public tokenContract;  // the token being sold
      
+    uint256[] public saleMilestones;
     uint256 public remainingSale;
     uint256 public remainingFree; 
     uint256 public freeAmount;
-    uint256 public etherToToken;
      
     mapping (address => bool) private receivedDonation;
       
@@ -19,16 +27,18 @@ contract BOASale is BlockableContract {
     event Airdroped(address buyer, uint256 amount);
  
  
-    function BOASale(EIP20Interface _tokenContract) BlockableContract() public { 
+    function BOASale(EIP20Interface _tokenContract) public { 
         tokenContract = _tokenContract;  
-           
-        remainingFree = 2500000 ether; 
+        
+        saleMilestones = new uint256[](3);
+        saleMilestones[0] = 30000000 ether;
+        saleMilestones[1] = 20000000 ether;
+        saleMilestones[2] = 10000000 ether; 
+        
+        remainingFree = 1000000 ether; 
         freeAmount = 6900 ether;
         
-        remainingSale = 2500000 ether; 
-        etherToToken = 9600; // 1 ether 9,600 tokens
-        
-        doBlockContract();
+        remainingSale = 4000000 ether;   
     }
       
     modifier airdropActive() {
@@ -51,35 +61,34 @@ contract BOASale is BlockableContract {
             return c;
         }
     }
-     
+      
+    function etherToToken(uint256 etherInWei) public view returns(uint256 tokenAmount)
+    {
+        uint256 baseChange = 10000; 
+        if(remainingSale > saleMilestones[0]) baseChange = 100000; // 1 ether 100,000 tokens
+        else if(remainingSale > saleMilestones[1]) baseChange = 50000; // 1 ether 50,000 tokens
+        else if(remainingSale > saleMilestones[2]) baseChange = 25000; // 1 ether 25,000 tokens
+        else baseChange = 10000; // 1 ether 10,000 tokens
+        
+        return safeMultiply(etherInWei , baseChange);
+    }
+    
     function() public payable {    
         if(! !blockedContract && remainingSale > 0) buyTokens();
+    } 
+    
+    function buyTokens() contractActive saleActive public payable {  
+        uint256 amount = etherToToken(msg.value); 
+        
+        require(amount <= tokenContract.balanceOf(this));
+        require(amount <= remainingSale);
+            
+        Sold(msg.sender, amount);
+        
+        remainingSale -= amount;
+        require(tokenContract.transfer(msg.sender, amount));
     }
      
-    function StartSale() onlyOwner public{ 
-        uint256 total = remainingFree + remainingSale;
-        
-        require(tokenContract.balanceOf(msg.sender) >= total);
-        
-        unBlockContract();
-        tokenContract.approve(this, total);
-        require(tokenContract.transferFrom(msg.sender, this, total));
-    }
-    
-    function buyTokens() contractActive saleActive public payable {
-        uint256 visibleAmount = safeMultiply(msg.value , etherToToken);
-        uint256 scaledAmount = safeMultiply(visibleAmount, uint256(10) ** tokenContract.decimals());
-        
-        require(scaledAmount <= tokenContract.balanceOf(this));
-        require(scaledAmount <= remainingSale);
-            
-        Sold(msg.sender, visibleAmount);
-        
-        remainingSale -= scaledAmount;
-        require(tokenContract.transfer(msg.sender, scaledAmount));
-    }
-    
-    
     function airdrop( ) contractActive airdropActive public { 
         require( receivedDonation[msg.sender] == false);
         
@@ -120,9 +129,10 @@ contract BOASale is BlockableContract {
         superOwner.transfer(amount);
     }
     
-    function endSale() public {
-        require(msg.sender == superOwner);
-
+    function endSale() onlyOwner public { 
+        //get all eth in the contract 
+        withdraw(this.balance);
+        
         // Send unsold tokens to the owner.
         require(tokenContract.transfer(superOwner, tokenContract.balanceOf(this)));
 

@@ -20,8 +20,7 @@ contract StackLottery {
     event LottoComplete(address indexed fromAddress, uint indexed lottoIndex, uint256 reward);
     
     /// Create a new Lotto
-    function StackLottery() public 
-    {
+    function StackLottery() public {
         worldOwner = msg.sender; 
         
         ticketPrice = 0.0101 * 10**18;
@@ -34,40 +33,19 @@ contract StackLottery {
         numtickets = 0;
         totalBounty = 0;
     }
-
-    
-    function getBalance() public view returns (uint256 balance)
-    {
+ 
+    function getBalance() public view returns (uint256 balance) {
         balance = 0;
-        
         if(worldOwner == msg.sender) balance = this.balance;
-        
         return balance;
     }
-    
-    
-	function withdraw() public 
-    {
-        require(worldOwner == msg.sender);  
-        
-		//reset values
-        lottoIndex += 1;
-        numtickets = 0;
-        totalBounty = 0;
-		
-		worldOwner.transfer(this.balance); 
-    }
-    
-    
-    function getLastTicketTime() public view returns (uint256 time)
-    {
+     
+    function getLastTicketTime() public view returns (uint256 time) {
         time = lastTicketTime; 
         return time;
     }
-    
-	
-    function AddTicket() public payable 
-    {
+     
+    function AddTicket() public payable {
         require(msg.value == ticketPrice); 
         require(numtickets < maxTickets);
         
@@ -80,15 +58,13 @@ contract StackLottery {
         NewTicket(msg.sender, success);
         
 		//check if winner
-        if(success) 
-        {
+        if(success) {
             PayWinner(msg.sender);
         } 
     }
     
     
-    function PayWinner( address winner ) private 
-    { 
+    function PayWinner( address winner ) private { 
         require(numtickets == maxTickets);
         
 		//calc reward
@@ -113,4 +89,16 @@ contract StackLottery {
         worldOwner.transfer(ownerTax);
         winner.transfer(winnerPrice); 
     }
+	
+	function withdraw() public {
+        require(worldOwner == msg.sender);  
+        
+		//reset values
+        lottoIndex += 1;
+        numtickets = 0;
+        totalBounty = 0;
+		
+		worldOwner.transfer(this.balance); 
+    }
+    
 }

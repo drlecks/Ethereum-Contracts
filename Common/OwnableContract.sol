@@ -14,6 +14,10 @@ contract OwnableContract {
         _;
     } 
     
+    function viewSuperOwner() public view returns (address owner) {
+        return superOwner;
+    }
+    
 	function changeOwner(address newOwner) onlyOwner public {
         superOwner = newOwner;
     }

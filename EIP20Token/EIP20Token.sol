@@ -15,18 +15,14 @@ contract EIP20Token is EIP20Interface, OwnableContract{
     string public name;                             //fancy name: eg Alex Cabrera 
     string public symbol;                           //An identifier: eg ACG
      
-    function EIP20Token( ) public {  
+    function EIP20Token() public {  
         name = "EIP20Token";                        // Set the name for display purposes
         decimals = 18;                              // Amount of decimals for display purposes
         symbol = "EIPT";                            // Set the symbol for display purposes
           
-        totalSupply = 69000000 * 10 ** 18;               // Update total supply
+        totalSupply = 100000000 * 10 ** decimals;               // Update total supply
         balances[msg.sender] = totalSupply;         // Give the creator all initial tokens 
     } 
-    
-    function viewOwner() public view returns(address contractOwner) {
-        return superOwner;
-    }
      
     function transfer(address _to, uint256 _value) public returns (bool success) {
         require(balances[msg.sender] >= _value);
