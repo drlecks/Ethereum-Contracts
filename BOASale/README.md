@@ -1,4 +1,4 @@
-# BAOSale
+# BOASale
 Token sale contract that interacts with EIPInterface.sol and has the following features:
 * Ownable
 * Blockable
