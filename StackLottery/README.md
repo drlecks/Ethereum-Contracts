@@ -1,5 +1,4 @@
 # Stack Lottery
-simple stack lottery contract.
+simple stack lottery contract. 
 
-Real world example:
-[The Ethereum Lottery](http://lottery.powdercode.com/)
+* This contract is an experimental study about aboiding RNG in lottery style games. It should not be deployed to make a comercial use with proper changes.
