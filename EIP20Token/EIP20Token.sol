@@ -3,10 +3,9 @@ Implements EIP20 token standard: https://github.com/ethereum/EIPs/issues/20
 .*/
 pragma solidity ^0.4.20;
 
-import "./EIP20Interface.sol";
-import "./OwnableContract.sol";
+import "./EIP20Interface.sol"; 
 
-contract EIP20Token is EIP20Interface, OwnableContract{
+contract EIP20Token is EIP20Interface{
 
     uint256 constant private MAX_UINT256 = 2**256 - 1;
     mapping (address => uint256) private balances;
@@ -57,9 +56,5 @@ contract EIP20Token is EIP20Interface, OwnableContract{
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }   
-	
-	function withdraw(uint256 amount) onlyOwner public {
-        require(this.balance >= amount);
-        superOwner.transfer(amount);
-    } 
+	 
 }
