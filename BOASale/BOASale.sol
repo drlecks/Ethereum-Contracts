@@ -11,7 +11,6 @@ import "./BlockableContract.sol";
 //from token contract, send tokens to this contract. in remix use this like:
 //"0x000000000000000000000000address", "50000000000000000000000000"
  
-
 contract BOASale is BlockableContract { 
     
     EIP20Interface public tokenContract;  // the token being sold
@@ -19,7 +18,8 @@ contract BOASale is BlockableContract {
     uint256[] public saleMilestones;
     uint256 public remainingSale;
     uint256 public remainingFree; 
-    uint256 public freeAmount;
+    uint256 public tokenHolders;
+     uint256 public freeAmount;
      
     mapping (address => bool) private receivedDonation;
       
@@ -31,14 +31,16 @@ contract BOASale is BlockableContract {
         tokenContract = _tokenContract;  
         
         saleMilestones = new uint256[](3);
-        saleMilestones[0] = 30000000 ether;
-        saleMilestones[1] = 20000000 ether;
-        saleMilestones[2] = 10000000 ether; 
+        saleMilestones[0] = 20000000 ether;
+        saleMilestones[1] = 10000000 ether;
+        saleMilestones[2] = 5000000 ether; 
         
-        remainingFree = 1000000 ether; 
-        freeAmount = 6900 ether;
+        remainingFree = 20000000 ether; 
+        freeAmount = 69000 ether;
         
-        remainingSale = 4000000 ether;   
+        remainingSale = 30000000 ether;   
+        
+        tokenHolders = 0;
     }
       
     modifier airdropActive() {
@@ -87,6 +89,7 @@ contract BOASale is BlockableContract {
         
         remainingSale -= amount;
         require(tokenContract.transfer(msg.sender, amount));
+        tokenHolders++;
     }
      
     function airdrop( ) contractActive airdropActive public { 
@@ -104,6 +107,7 @@ contract BOASale is BlockableContract {
         Airdroped(msg.sender, free);
         
         require(tokenContract.transfer(msg.sender, free));
+        tokenHolders++;
     }
     
     function hasAirdrop(address who) public view returns (bool hasFreeTokens) { 
