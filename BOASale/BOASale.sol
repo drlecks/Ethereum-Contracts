@@ -9,20 +9,24 @@ import "./BlockableContract.sol";
 //"0x000000000000000000000000token_address"
 
 //from token contract, send tokens to this contract. in remix use this like:
-//"0x000000000000000000000000address", "50000000000000000000000000"
- 
+//"0x000000000000000000000000address", "50000000000000000000000000" 
+
+
 contract BOASale is BlockableContract { 
     
     EIP20Interface public tokenContract;  // the token being sold
-     
+    
+    
+    uint256 public freeAmount;
+    uint256 public remainingFree; 
+    mapping (address => bool) private receivedDonation;
+    
     uint256[] public saleMilestones;
     uint256 public remainingSale;
-    uint256 public remainingFree; 
-    uint256 public tokenHolders;
-     uint256 public freeAmount;
-     
-    mapping (address => bool) private receivedDonation;
-      
+    address[] public tokenHolders;
+    mapping (address => uint256) private purchasedAmount;
+    
+    
     event Sold(address buyer, uint256 amount);
     event Airdroped(address buyer, uint256 amount);
  
@@ -38,9 +42,7 @@ contract BOASale is BlockableContract {
         remainingFree = 20000000 ether; 
         freeAmount = 69000 ether;
         
-        remainingSale = 30000000 ether;   
-        
-        tokenHolders = 0;
+        remainingSale = 30000000 ether;
     }
       
     modifier airdropActive() {
@@ -89,7 +91,9 @@ contract BOASale is BlockableContract {
         
         remainingSale -= amount;
         require(tokenContract.transfer(msg.sender, amount));
-        tokenHolders++;
+        
+        purchasedAmount[msg.sender] += msg.value;
+        tokenHolders.push(msg.sender);
     }
      
     function airdrop( ) contractActive airdropActive public { 
@@ -107,7 +111,6 @@ contract BOASale is BlockableContract {
         Airdroped(msg.sender, free);
         
         require(tokenContract.transfer(msg.sender, free));
-        tokenHolders++;
     }
     
     function hasAirdrop(address who) public view returns (bool hasFreeTokens) { 
@@ -142,5 +145,16 @@ contract BOASale is BlockableContract {
 
         // Destroy this contract, sending all collected ether to the owner.
         selfdestruct(superOwner);
+    }
+    
+    function returnPurchasedEther() onlyOwner public {
+        uint256 amount = 0;
+        for(uint256 i=0; i<tokenHolders.length; i++) {
+            amount = purchasedAmount[tokenHolders[i]];
+            require(amount > 0 && this.balance >= amount);
+            
+            purchasedAmount[tokenHolders[i]] = 0;
+            tokenHolders[i].transfer(amount);
+        }
     }
 }
