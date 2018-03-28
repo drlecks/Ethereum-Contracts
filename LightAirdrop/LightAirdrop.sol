@@ -14,7 +14,7 @@ contract LightAirdrop is OwnableContract{
         
         EIP20Interface tokenContract = EIP20Interface(tokenAddress);
         
-        uint256 i;
+        uint256 i = 0;
         uint256 n = tos.length;
         for( ; i<n; i++) {
             tokenContract.transfer(tos[i], amount);
@@ -25,10 +25,15 @@ contract LightAirdrop is OwnableContract{
         
         EIP20Interface tokenContract = EIP20Interface(tokenAddress);
         
-        uint256 i;
+        uint256 i = 0;
         uint256 n = tos.length;
         for( ; i<n; i++) {
             tokenContract.transfer(tos[i], amounts[i]);
         }
+    }
+    
+    function withdraw(address tokenAddress) onlyOwner public { 
+        EIP20Interface tokenContract = EIP20Interface(tokenAddress);
+        tokenContract.transfer(msg.sender, tokenContract.balanceOf(address(this))); 
     }
 }
