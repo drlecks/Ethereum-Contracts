@@ -6,7 +6,7 @@ import "./BlockableContract.sol";
 
 
 //to create contract user this initialization
-//"0x000000000000000000000000token_address"
+//"0x000000000000000000000000token"
 
 //from token contract, send tokens to this contract. in remix use this like:
 //"0x000000000000000000000000address", "50000000000000000000000000" 
@@ -87,7 +87,7 @@ contract BOASale is BlockableContract {
         require(amount <= tokenContract.balanceOf(this));
         require(amount <= remainingSale);
             
-        Sold(msg.sender, amount);
+        emit Sold(msg.sender, amount);
         
         remainingSale -= amount;
         require(tokenContract.transfer(msg.sender, amount));
@@ -108,7 +108,7 @@ contract BOASale is BlockableContract {
         remainingFree -= free;
         receivedDonation[msg.sender] = true;
         
-        Airdroped(msg.sender, free);
+        emit Airdroped(msg.sender, free);
         
         require(tokenContract.transfer(msg.sender, free));
     }
@@ -126,19 +126,34 @@ contract BOASale is BlockableContract {
 			realAmount = remainingFree;
           
         remainingFree -= realAmount;  
-        Airdroped(_to, realAmount); 
+        emit Airdroped(_to, realAmount); 
         
         require(tokenContract.transfer(_to, realAmount));
     }
+    
+    
+    function ownerSale(address _to, uint256 amount) contractActive onlyOwner public {  
+        uint256 realAmount;
+        if(amount<=remainingSale) 
+			realAmount = amount;
+        else                      
+			realAmount = remainingSale;
+          
+        remainingSale -= realAmount;  
+        emit Sold(_to, realAmount); 
+        
+        require(tokenContract.transfer(_to, realAmount));
+    }
+    
 	
     function withdraw(uint256 amount) onlyOwner public {
-        require(this.balance >= amount);
+        require(address(this).balance >= amount);
         superOwner.transfer(amount);
     }
     
     function endSale() onlyOwner public { 
         //get all eth in the contract 
-        withdraw(this.balance);
+        withdraw(address(this).balance);
         
         // Send unsold tokens to the owner.
         require(tokenContract.transfer(superOwner, tokenContract.balanceOf(this)));
@@ -151,7 +166,7 @@ contract BOASale is BlockableContract {
         uint256 amount = 0;
         for(uint256 i=0; i<tokenHolders.length; i++) {
             amount = purchasedAmount[tokenHolders[i]];
-            require(amount > 0 && this.balance >= amount);
+            require(amount > 0 && address(this).balance >= amount);
             
             purchasedAmount[tokenHolders[i]] = 0;
             tokenHolders[i].transfer(amount);
