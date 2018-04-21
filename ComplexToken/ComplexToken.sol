@@ -1,7 +1,7 @@
 /*
 Implements EIP20 token standard: https://github.com/ethereum/EIPs/issues/20
 .*/
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "./EIP20Interface.sol"; 
 import "./SafeMath.sol"; 
@@ -22,7 +22,7 @@ contract ComplexToken is EIP20Interface{
     event TransferMultiDiff(address indexed _from); 
     
      
-    function EIP20Token() public {  
+    constructor() public {  
         name = "ComplexToken";                              // Set the name for display purposes
         decimals = 18;                                      // Amount of decimals for display purposes
         symbol = "CTT";                                     // Set the symbol for display purposes

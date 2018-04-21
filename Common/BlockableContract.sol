@@ -1,4 +1,4 @@
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.23;
  
 
 import "./OwnableContract.sol";
@@ -8,7 +8,7 @@ contract BlockableContract is OwnableContract{
  
     bool public blockedContract;
 	
-	function BlockableContract() public { 
+	constructor() public { 
         blockedContract = false;  
     }
 	

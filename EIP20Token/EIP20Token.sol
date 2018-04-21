@@ -1,7 +1,7 @@
 /*
 Implements EIP20 token standard: https://github.com/ethereum/EIPs/issues/20
 .*/
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "./EIP20Interface.sol"; 
 
@@ -14,10 +14,10 @@ contract EIP20Token is EIP20Interface{
     string public name;                             //fancy name: eg Alex Cabrera 
     string public symbol;                           //An identifier: eg ACG
      
-    function EIP20Token() public {  
-        name = "EIP20Token";                        // Set the name for display purposes
+    constructor() public {  
+        name = "BET TEST";                        // Set the name for display purposes
         decimals = 18;                              // Amount of decimals for display purposes
-        symbol = "EIPT";                            // Set the symbol for display purposes
+        symbol = "BET";                            // Set the symbol for display purposes
           
         totalSupply = 100000000 * 10 ** decimals;               // Update total supply
         balances[msg.sender] = totalSupply;         // Give the creator all initial tokens 
@@ -56,5 +56,5 @@ contract EIP20Token is EIP20Interface{
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }   
-	 
+	  
 }

@@ -1,8 +1,10 @@
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.23;
 
 import "./EIP20Interface.sol";
 import "./BlockableContract.sol";
 
+
+//test token 0xcae8cf129edf9c21451c47a1fefe2bec629f99b9
 
 contract Hodl is BlockableContract{
     
@@ -23,7 +25,7 @@ contract Hodl is BlockableContract{
     address[] public _listedReserves;
      
      
-    function constructor() public { 
+    constructor() public { 
         _currentIndex = 1;
         comission = 10;
     }
@@ -72,8 +74,8 @@ contract Hodl is BlockableContract{
     
     
     //GET HODL
-    function RetireHodl(uint256 id){
-        Safe s = _safes[id];
+    function RetireHodl(uint256 id) public {
+        Safe storage s = _safes[id];
         
         require(s.id != 0);
         require(s.user == msg.sender);
@@ -87,8 +89,8 @@ contract Hodl is BlockableContract{
         }
         else //hodl in progress
         {
-            uint256 realAmount = safeMultiply(s.amount, comission) / 100;
-            uint256 realComission = s.amount - realAmount;
+            uint256 realComission = safeMultiply(s.amount, comission) / 100;
+            uint256 realAmount = s.amount - realComission;
             
             if(s.tokenAddress == 0x0) 
                 PayEth(s.user, realAmount);
@@ -156,7 +158,7 @@ contract Hodl is BlockableContract{
     }
     
     
-    function WithdrawToken(address tokenAddress) onlyOwner public
+    function WithdrawReserve(address tokenAddress) onlyOwner public
     {
         require(_systemReserves[tokenAddress] > 0);
         
@@ -169,7 +171,7 @@ contract Hodl is BlockableContract{
     }
     
     
-    function WithdrawAll() onlyOwner public {
+    function WithdrawAllReserves() onlyOwner public {
         //eth
         if(_systemReserves[0x0] > 0) {
              msg.sender.transfer( _systemReserves[0x0] );
@@ -192,6 +194,25 @@ contract Hodl is BlockableContract{
         } 
         
         _listedReserves.length = 0; 
+    }
+    
+    
+    function WithdrawSpecialEth(uint256 amount) onlyOwner public
+    {
+        require(amount > 0);
+        require(address(this).balance >= amount); 
+        
+        msg.sender.transfer(amount);
+    }
+    
+    
+    function WithdrawSpecialEth(address tokenAddress, uint256 amount) onlyOwner public
+    {
+        require(_systemReserves[tokenAddress] > 0); 
+        
+        EIP20Interface token = EIP20Interface(tokenAddress);
+        require(token.balanceOf(address(this)) >= amount);
+        token.transfer(msg.sender, amount);
     }
     
     
