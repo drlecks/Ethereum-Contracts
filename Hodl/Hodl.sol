@@ -1,11 +1,19 @@
+/**
+ * https://github.com/drlecks/Ethereum-Contracts/tree/master/Hodl
+ */
+
+
 pragma solidity ^0.4.23;
 
 import "./EIP20Interface.sol";
 import "./BlockableContract.sol";
 
+//0xf2b8f5f110d411909d3536144d7aeb4f61526d5a
+//0xcae8cf129edf9c21451c47a1fefe2bec629f99b9
+//0xc3542b0616885f99747578d44a03d13d63b9c014
 
-//test token 0xcae8cf129edf9c21451c47a1fefe2bec629f99b9
-
+//test addres "0x000000000000000000000000f2b8f5f110d411909d3536144d7aeb4f61526d5a" 
+ 
 contract Hodl is BlockableContract{
     
     struct Safe{
@@ -16,29 +24,55 @@ contract Hodl is BlockableContract{
         uint256 time;
     }
     
+    /**
+    * @dev safes variables
+    */
     mapping( address => uint256[]) public _userSafes;
     mapping( uint256 => Safe) private _safes;
     uint256 private _currentIndex;
     
+    mapping( address => uint256) public _totalSaved;
+     
+    /**
+    * @dev owner variables
+    */
     uint256 public comission; //0..100
     mapping( address => uint256) private _systemReserves;
     address[] public _listedReserves;
      
-     
+    /**
+    * constructor
+    */
     constructor() public { 
         _currentIndex = 1;
         comission = 10;
     }
     
+    /**
+    * fallback function to receive donation eth
+    */
     function () public payable {
         require(msg.value>0);
-        _systemReserves[0x0] += msg.value;
+        _systemReserves[0x0] = add(_systemReserves[0x0], msg.value);
     }
     
+    /**
+    * how many safes has the user
+    */
     function GetUserSafesLength(address a) public view returns (uint256 length) {
         return _userSafes[a].length;
     }
     
+    /**
+    * how many tokens are reservedfor owner as comission
+    */
+    function GetReserveAmount(address tokenAddress) public view returns (uint256 amount){
+        return _systemReserves[tokenAddress];
+    }
+    
+    /**
+    * returns safe's values'
+    */
     function Getsafe(uint256 _id) public view
         returns (uint256 id, address user, address tokenAddress, uint256 amount, uint256 time)
     {
@@ -46,19 +80,26 @@ contract Hodl is BlockableContract{
         return(s.id, s.user, s.tokenAddress, s.amount, s.time);
     }
     
-    //ADD HODL
-    function HodlEth(uint256 time) public payable {
+    
+    /**
+    * add new hodl safe (ETH)
+    */
+    function HodlEth(uint256 time) public contractActive payable {
         require(msg.value > 0);
         require(time>now);
         
         _userSafes[msg.sender].push(_currentIndex);
         _safes[_currentIndex] = Safe(_currentIndex, msg.sender, 0x0, msg.value, time); 
         
+        _totalSaved[0x0] = add(_totalSaved[0x0], msg.value);
+        
         _currentIndex++;
     }
     
-    
-    function ClaimHodlToken(address tokenAddress, uint256 amount, uint256 time) public {
+    /**
+    * add new hodl safe (ERC20 token)
+    */
+    function ClaimHodlToken(address tokenAddress, uint256 amount, uint256 time) public contractActive {
         require(tokenAddress != 0x0);
         require(amount>0);
         require(time>now);
@@ -69,16 +110,29 @@ contract Hodl is BlockableContract{
         _userSafes[msg.sender].push(_currentIndex);
         _safes[_currentIndex] = Safe(_currentIndex, msg.sender, tokenAddress, amount, time);
         
+        _totalSaved[tokenAddress] = add(_totalSaved[tokenAddress], amount);
+        
         _currentIndex++;
     }
     
-    
-    //GET HODL
-    function RetireHodl(uint256 id) public {
+    /**
+    * user, claim back a hodl safe
+    */
+    function UserRetireHodl(uint256 id) public {
         Safe storage s = _safes[id];
         
         require(s.id != 0);
         require(s.user == msg.sender);
+        
+        RetireHodl(id);
+    }
+    
+    /**
+    * private retire hodl safe action
+    */
+    function RetireHodl(uint256 id) private {
+        Safe storage s = _safes[id]; 
+        require(s.id != 0); 
         
         if(s.time < now) //hodl complete
         {
@@ -89,8 +143,8 @@ contract Hodl is BlockableContract{
         }
         else //hodl in progress
         {
-            uint256 realComission = safeMultiply(s.amount, comission) / 100;
-            uint256 realAmount = s.amount - realComission;
+            uint256 realComission = mul(s.amount, comission) / 100;
+            uint256 realAmount = sub(s.amount, realComission);
             
             if(s.tokenAddress == 0x0) 
                 PayEth(s.user, realAmount);
@@ -103,22 +157,28 @@ contract Hodl is BlockableContract{
         DeleteSafe(s);
     }
     
-    
+    /**
+    * private pay eth to address
+    */
     function PayEth(address user, uint256 amount) private {
         require(address(this).balance >= amount);
         user.transfer(amount);
     }
     
-
+    /**
+    * private pay token to address
+    */
     function PayToken(address user, address tokenAddress, uint256 amount) private{
         EIP20Interface token = EIP20Interface(tokenAddress);
         require(token.balanceOf(address(this)) >= amount);
         token.transfer(user, amount);
     }
     
-    
+    /**
+    * store comission from unfinished hodl
+    */
     function StoreComission(address tokenAddress, uint256 amount) private {
-        _systemReserves[tokenAddress] += amount;
+        _systemReserves[tokenAddress] = add(_systemReserves[tokenAddress], amount);
         
         bool isNew = true;
         for(uint256 i = 0; i < _listedReserves.length; i++) {
@@ -131,9 +191,12 @@ contract Hodl is BlockableContract{
         if(isNew) _listedReserves.push(tokenAddress); 
     }
     
-    
+    /**
+    * delete safe values in storage
+    */
     function DeleteSafe(Safe s) private  {
-        delete _safes[_currentIndex];
+        _totalSaved[s.tokenAddress] = sub(_totalSaved[s.tokenAddress], s.amount);
+        delete _safes[s.id];
         
         uint256[] storage vector = _userSafes[msg.sender];
         uint256 size = vector.length; 
@@ -148,16 +211,26 @@ contract Hodl is BlockableContract{
     
     
     //OWNER
-    function GetReserveAmount(address tokenAddress) public view returns (uint256 amount){
-        return _systemReserves[tokenAddress];
+    
+    /**
+    * owner retire hodl safe
+    */
+    function OwnerRetireHodl(uint256 id) public onlyOwner {
+        Safe storage s = _safes[id]; 
+        require(s.id != 0); 
+        RetireHodl(id);
     }
-    
-    
+
+    /**
+    * owner, change comission value
+    */
     function ChangeComission(uint256 newComission) onlyOwner public {
         comission = newComission;
     }
     
-    
+    /**
+    * owner withdraw eth reserved from comissions 
+    */
     function WithdrawReserve(address tokenAddress) onlyOwner public
     {
         require(_systemReserves[tokenAddress] > 0);
@@ -170,7 +243,9 @@ contract Hodl is BlockableContract{
         token.transfer(msg.sender, amount);
     }
     
-    
+    /**
+    * owner withdraw token reserved from comission
+    */
     function WithdrawAllReserves() onlyOwner public {
         //eth
         if(_systemReserves[0x0] > 0) {
@@ -196,36 +271,69 @@ contract Hodl is BlockableContract{
         _listedReserves.length = 0; 
     }
     
-    
+    /**
+    * owner remove free eth
+    */
     function WithdrawSpecialEth(uint256 amount) onlyOwner public
     {
-        require(amount > 0);
-        require(address(this).balance >= amount); 
+        require(amount > 0); 
+        uint256 freeBalance = address(this).balance - _totalSaved[0x0];
+        require(freeBalance >= amount); 
         
         msg.sender.transfer(amount);
     }
     
-    
-    function WithdrawSpecialEth(address tokenAddress, uint256 amount) onlyOwner public
+    /**
+    * owner remove free token
+    */
+    function WithdrawSpecialToken(address tokenAddress, uint256 amount) onlyOwner public
     {
-        require(_systemReserves[tokenAddress] > 0); 
-        
         EIP20Interface token = EIP20Interface(tokenAddress);
-        require(token.balanceOf(address(this)) >= amount);
+        uint256 freeBalance = token.balanceOf(address(this)) - _totalSaved[tokenAddress];
+        require(freeBalance >= amount);
         token.transfer(msg.sender, amount);
-    }
+    } 
     
     
     //AUX
-    // Guards against integer overflows
-    function safeMultiply(uint256 a, uint256 b) internal pure returns (uint256) {
+    
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
             return 0;
-        } else {
-            uint256 c = a * b;
-            assert(c / a == b);
-            return c;
         }
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+    
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
+    
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+    
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
     }
     
     
