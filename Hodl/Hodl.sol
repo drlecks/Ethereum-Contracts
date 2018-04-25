@@ -2,18 +2,12 @@
  * https://github.com/drlecks/Ethereum-Contracts/tree/master/Hodl
  */
 
-
 pragma solidity ^0.4.23;
 
 import "./EIP20Interface.sol";
 import "./BlockableContract.sol";
 
-//0xf2b8f5f110d411909d3536144d7aeb4f61526d5a
-//0xcae8cf129edf9c21451c47a1fefe2bec629f99b9
-//0xc3542b0616885f99747578d44a03d13d63b9c014
 
-//test addres "0x000000000000000000000000f2b8f5f110d411909d3536144d7aeb4f61526d5a" 
- 
 contract Hodl is BlockableContract{
     
     struct Safe{
@@ -248,9 +242,10 @@ contract Hodl is BlockableContract{
     */
     function WithdrawAllReserves() onlyOwner public {
         //eth
-        if(_systemReserves[0x0] > 0) {
-             msg.sender.transfer( _systemReserves[0x0] );
-             _systemReserves[0x0] = 0;
+        uint256 x = _systemReserves[0x0];
+        if(x > 0 && x <= address(this).balance) {
+            _systemReserves[0x0] = 0;
+            msg.sender.transfer( _systemReserves[0x0] );
         }
          
         //tokens
@@ -260,11 +255,11 @@ contract Hodl is BlockableContract{
             ta = _listedReserves[i];
             if(_systemReserves[ta] > 0)
             { 
-                uint256 amount = _systemReserves[ta];
+                x = _systemReserves[ta];
                 _systemReserves[ta] = 0;
                 
                 token = EIP20Interface(ta);
-                token.transfer(msg.sender, amount);
+                token.transfer(msg.sender, x);
             }
         } 
         
@@ -279,7 +274,6 @@ contract Hodl is BlockableContract{
         require(amount > 0); 
         uint256 freeBalance = address(this).balance - _totalSaved[0x0];
         require(freeBalance >= amount); 
-        
         msg.sender.transfer(amount);
     }
     
